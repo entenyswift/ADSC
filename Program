@@ -1,0 +1,107 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+
+class BankAccount
+{
+    public string Surname { get; set; }
+    public string Name { get; set; }
+    public string PersonalCode { get; set; }
+    public string AccountNumber { get; set; }
+    public double Balance { get; set; }
+    public string Currency { get; set; }
+
+    public BankAccount()
+    {
+        // Конструктор по умолчанию
+    }
+
+    public BankAccount(string surname, string name, string personalCode, string accountNumber, double balance, string currency)
+    {
+        Surname = surname;
+        Name = name;
+        PersonalCode = personalCode;
+        AccountNumber = accountNumber;
+        Balance = balance;
+        Currency = currency;
+    }
+
+    public override string ToString()
+    {
+        return $"Surname: {Surname}, Name: {Name}, Personal Code: {PersonalCode}, Account Number: {AccountNumber}, Balance: {Balance}, Currency: {Currency}";
+    }
+
+    public bool Equals(BankAccount other)
+    {
+        return Surname == other.Surname && Name == other.Name && PersonalCode == other.PersonalCode &&
+               AccountNumber == other.AccountNumber && Balance == other.Balance && Currency == other.Currency;
+    }
+
+    public void ReadFromStream(StreamReader stream)
+    {
+        string line = stream.ReadLine();
+        if (line != null)
+        {
+            string[] parts = line.Split(';');
+            if (parts.Length == 6)
+            {
+                Surname = parts[0];
+                Name = parts[1];
+                PersonalCode = parts[2];
+                AccountNumber = parts[3];
+                if (double.TryParse(parts[4], out double balance))
+                {
+                    Balance = balance;
+                }
+                else
+                {
+                    Console.WriteLine("Ошибка при чтении баланса");
+                    Balance = 0; 
+                }
+                Currency = parts[5];
+            }
+            else
+            {
+                Console.WriteLine("Ошибка чтения данных из строки: недостаточно элементов для создания объекта BankAccount.");
+            }
+        }
+    }
+
+    public void WriteToStream(StreamWriter stream)
+    {
+        stream.WriteLine($"{Surname};{Name};{PersonalCode};{AccountNumber};{Balance};{Currency}");
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        List<BankAccount> accounts = new List<BankAccount>();
+
+        
+        using (StreamReader reader = new StreamReader("bank_accounts.txt"))
+        {
+            // Пропускаем первую строку, так как это заголовок
+            reader.ReadLine();
+
+            
+            string line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                BankAccount account = new BankAccount();
+                account.ReadFromStream(new StreamReader(new MemoryStream(Encoding.UTF8.GetBytes(line))));
+                accounts.Add(account);
+                // Пропускаем следующую строку, если она есть, чтобы пропустить строку с заголовками
+                reader.ReadLine();
+            }
+        }
+
+        // Вывод на экран
+        foreach (BankAccount account in accounts)
+        {
+            Console.WriteLine(account);
+        }
+    }
+}
